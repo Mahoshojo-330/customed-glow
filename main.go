@@ -308,7 +308,16 @@ func executeCLI(cmd *cobra.Command, src *source, w io.Writer) error {
 		content = utils.WrapCodeBlock(string(b), ext)
 	}
 
-	out, err := r.Render(content)
+	// Render with untagged code fences marked as plain text, but keep
+	// `content` pristine: in TUI mode it becomes the document body, which
+	// must match the source (e.g. for the pager's copy command). The TUI
+	// applies the same transformation at render time.
+	rendered := content
+	if !isCode {
+		rendered = utils.PlainTextCodeBlocks(content)
+	}
+
+	out, err := r.Render(rendered)
 	if err != nil {
 		return fmt.Errorf("unable to render markdown: %w", err)
 	}

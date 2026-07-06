@@ -45,6 +45,63 @@ func WrapCodeBlock(s, language string) string {
 	return "```" + language + "\n" + s + "```"
 }
 
+// fencePattern matches the opening or closing line of a fenced code block:
+// an optional blockquote prefix, up to three spaces of indentation, the
+// fence itself, and the (possibly empty) info string.
+var fencePattern = regexp.MustCompile("^((?: {0,3}> ?)* {0,3})(`{3,}|~{3,})(.*)$")
+
+// PlainTextCodeBlocks tags fenced code blocks that don't specify a language
+// as plain text. Without a language, chroma guesses one by analyzing the
+// block's contents and highlights it accordingly; tagging the fence with
+// "text" keeps such blocks unhighlighted while leaving explicitly tagged
+// blocks (e.g. ```java) alone. Matching is best-effort per CommonMark;
+// fences nested in containers the scanner doesn't model (e.g. list items
+// indented 4+ spaces) are left untouched, erring toward not modifying
+// content.
+func PlainTextCodeBlocks(md string) string {
+	var (
+		inFence    bool
+		fenceChar  byte
+		fenceLen   int
+		quoteDepth int
+	)
+
+	lines := strings.Split(md, "\n")
+	for i, line := range lines {
+		m := fencePattern.FindStringSubmatch(line)
+		if m == nil {
+			continue
+		}
+		prefix, fence, info := m[1], m[2], strings.TrimSpace(m[3])
+
+		if inFence {
+			// Only a matching fence of at least the opening length with no
+			// info string closes the block; anything else is content.
+			if fence[0] == fenceChar && len(fence) >= fenceLen && info == "" && strings.Count(prefix, ">") == quoteDepth {
+				inFence = false
+			}
+			continue
+		}
+
+		// Info strings of backtick fences cannot contain backticks; such a
+		// line is not a fence at all (e.g. inline code spans).
+		if fence[0] == '`' && strings.Contains(info, "`") {
+			continue
+		}
+
+		inFence = true
+		fenceChar = fence[0]
+		fenceLen = len(fence)
+		quoteDepth = strings.Count(prefix, ">")
+
+		if info == "" {
+			lines[i] = prefix + fence + "text"
+		}
+	}
+
+	return strings.Join(lines, "\n")
+}
+
 var markdownExtensions = []string{
 	".md", ".mdown", ".mkdn", ".mkd", ".markdown",
 }
