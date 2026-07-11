@@ -96,6 +96,26 @@ command_path() {
 	command -v "$name" 2>/dev/null || true
 }
 
+install_mermaid_ascii() {
+	if command -v mermaid-ascii >/dev/null 2>&1; then
+		log "mermaid-ascii already available"
+		return 0
+	fi
+
+	if [ "${GLOW_UPDATE_SKIP_MERMAID_INSTALL:-0}" = "1" ]; then
+		log "Skipping mermaid-ascii install"
+		return 0
+	fi
+
+	log "Installing mermaid-ascii $MERMAID_ASCII_VERSION"
+	if go install "$MERMAID_ASCII_MODULE@$MERMAID_ASCII_VERSION"; then
+		return 0
+	fi
+
+	log "Could not install mermaid-ascii; continuing without Mermaid rendering on PATH."
+	log "Install later with: go install $MERMAID_ASCII_MODULE@$MERMAID_ASCII_VERSION"
+}
+
 ROOT=$(repo_root)
 cd "$ROOT"
 
@@ -121,8 +141,7 @@ TMPDIR=${TMPDIR:-/tmp}
 BUILD_DIR=$(mktemp -d "$TMPDIR/glow-update.XXXXXX")
 trap 'rm -rf "$BUILD_DIR"' EXIT INT TERM
 
-log "Installing mermaid-ascii $MERMAID_ASCII_VERSION"
-go install "$MERMAID_ASCII_MODULE@$MERMAID_ASCII_VERSION"
+install_mermaid_ascii
 
 if [ "${GLOW_UPDATE_SKIP_TESTS:-0}" != "1" ]; then
 	log "Running tests"
