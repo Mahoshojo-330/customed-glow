@@ -1,6 +1,9 @@
 package utils
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestPlainTextCodeBlocks(t *testing.T) {
 	tests := []struct {
@@ -104,6 +107,59 @@ func TestPlainTextCodeBlocks(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if got := PlainTextCodeBlocks(tc.in); got != tc.want {
 				t.Errorf("PlainTextCodeBlocks(%q)\n got: %q\nwant: %q", tc.in, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestRenderMermaidCodeBlocks(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		out  string
+		err  error
+	}{
+		{
+			name: "renders mermaid blocks as plain text",
+			in:   "before\n```mermaid\ngraph TD\n  A --> B\n```\nafter\n",
+			out:  "before\n```text\n+---+\n| A |\n+---+\n```\nafter\n",
+		},
+		{
+			name: "leaves other code blocks alone",
+			in:   "```go\nfmt.Println(\"hello\")\n```\n",
+			out:  "```go\nfmt.Println(\"hello\")\n```\n",
+		},
+		{
+			name: "keeps unsupported diagrams readable",
+			in:   "```mermaid\nmadeUpDiagram\n```\n",
+			out:  "```mermaid\nmadeUpDiagram\n```\n",
+			err:  errors.New("unsupported Mermaid diagram"),
+		},
+		{
+			name: "recognizes Mermaid options and tilde fences",
+			in:   "~~~~mermaid {theme: dark}\ngraph TD\n  A --> B\n~~~~\n",
+			out:  "~~~~text\n+---+\n| A |\n+---+\n~~~~\n",
+		},
+		{
+			name: "renders blockquoted Mermaid",
+			in:   "> ```mermaid\n> graph TD\n>   A --> B\n> ```\n",
+			out:  "> ```text\n> +---+\n> | A |\n> +---+\n> ```\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := renderMermaidCodeBlocks(tt.in, func(input string) (string, error) {
+				if tt.err != nil {
+					return "", tt.err
+				}
+				if input != "graph TD\n  A --> B" {
+					t.Fatalf("renderer received %q", input)
+				}
+				return "+---+\n| A |\n+---+\n", nil
+			})
+			if got != tt.out {
+				t.Errorf("renderMermaidCodeBlocks() = %q, want %q", got, tt.out)
 			}
 		})
 	}

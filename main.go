@@ -314,7 +314,7 @@ func executeCLI(cmd *cobra.Command, src *source, w io.Writer) error {
 	// applies the same transformation at render time.
 	rendered := content
 	if !isCode {
-		rendered = utils.PlainTextCodeBlocks(content)
+		rendered = utils.PlainTextCodeBlocks(utils.RenderMermaidCodeBlocks(content))
 	}
 
 	out, err := r.Render(rendered)

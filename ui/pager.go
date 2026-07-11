@@ -448,7 +448,7 @@ func glamourRender(m pagerModel, markdown string) (string, error) {
 	if isCode {
 		markdown = utils.WrapCodeBlock(markdown, filepath.Ext(m.currentDocument.Note))
 	} else {
-		markdown = utils.PlainTextCodeBlocks(markdown)
+		markdown = utils.PlainTextCodeBlocks(utils.RenderMermaidCodeBlocks(markdown))
 	}
 
 	out, err := r.Render(markdown)
