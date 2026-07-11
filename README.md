@@ -2,6 +2,7 @@
 difference from original:
 - The code blocks starting with (```) is now default without syntax hightlight
 - the editor is changed to vim instead of nano
+- now support mermaid!
 
 # Glow
 
