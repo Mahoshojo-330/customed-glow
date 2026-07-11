@@ -1,3 +1,8 @@
+# Customed glow
+difference from original:
+- The code blocks starting with (```) is now default without syntax hightlight
+- the editor is changed to vim instead of nano
+
 # Glow
 
 Render markdown on the CLI, with _pizzazz_!
