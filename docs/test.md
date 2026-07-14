@@ -1,3 +1,5 @@
+update the mermaid rendering part by allowing it to adapt to the width of the terminal
+
 ```mermaid
 flowchart TD
     A[Markdown file] --> B{Contains Mermaid fence?}
