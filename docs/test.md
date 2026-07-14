@@ -1,5 +1,5 @@
 update the mermaid rendering part by allowing it to adapt to the width of the terminal
-
+idk keep the interface the same for both glow and editor (vim in this case)
 ```mermaid
 flowchart TD
     A[Markdown file] --> B{Contains Mermaid fence?}
